@@ -1,0 +1,262 @@
+.poker-table-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--spacing-xl);
+}
+
+.poker-table {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    aspect-ratio: 16 / 10;
+}
+
+/* Felt surface */
+.felt {
+    position: absolute;
+    inset: 60px;
+    background: radial-gradient(ellipse at center, #0d5c36 0%, #094028 100%);
+    border-radius: 50%;
+    border: 12px solid #8B4513;
+    box-shadow:
+        inset 0 0 60px rgba(0, 0, 0, 0.4),
+        0 0 0 4px #5C3317,
+        0 10px 40px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+}
+
+/* Pot display */
+.pot-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.5);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--radius-full);
+}
+
+.pot-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.pot-amount {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--color-accent);
+    font-family: var(--font-mono);
+}
+
+/* Community cards */
+.community-cards {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.card-slot {
+    width: 50px;
+    height: 70px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-sm);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+.card {
+    width: 50px;
+    height: 70px;
+    background: #fff;
+    border-radius: var(--radius-sm);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.card.red {
+    color: #dc3545;
+}
+
+.card.black {
+    color: #1a1a2e;
+}
+
+.card-rank {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.card-suit {
+    font-size: 20px;
+    line-height: 1;
+}
+
+/* Phase indicator */
+.phase-indicator {
+    position: absolute;
+    bottom: 20px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Seats */
+.seat {
+    position: absolute;
+    background: var(--color-bg-card);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    min-width: 120px;
+    transition: all 0.3s;
+}
+
+.seat.occupied {
+    border-color: var(--color-border);
+}
+
+.seat.action-on {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+    animation: glow 1.5s ease-in-out infinite;
+}
+
+.seat.player-seat {
+    background: rgba(0, 255, 136, 0.1);
+}
+
+.seat.empty {
+    opacity: 0.6;
+    cursor: pointer;
+}
+
+.seat.empty:hover {
+    opacity: 1;
+    border-color: var(--color-accent);
+}
+
+/* Dealer button */
+.dealer-button {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 28px;
+    height: 28px;
+    background: #fff;
+    color: #1a1a2e;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Seat content */
+.seat-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.player-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--color-accent) 0%, #00cc6a 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #0a0a0f;
+    font-size: 14px;
+}
+
+.player-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.player-address {
+    font-size: 11px;
+    color: var(--color-text-dim);
+    font-family: var(--font-mono);
+}
+
+.player-chips {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-accent);
+}
+
+.player-status {
+    font-size: 10px;
+    color: var(--color-text-dim);
+    text-transform: uppercase;
+}
+
+.player-bet {
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-warning);
+}
+
+/* Empty seat */
+.empty-seat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: var(--spacing-md);
+    color: var(--color-text-dim);
+    font-size: 14px;
+}
+
+.join-hint {
+    font-size: 11px;
+    color: var(--color-accent);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .felt {
+        inset: 40px;
+    }
+
+    .seat {
+        min-width: 90px;
+        padding: var(--spacing-sm);
+    }
+
+    .card {
+        width: 40px;
+        height: 56px;
+    }
+
+    .card-rank {
+        font-size: 14px;
+    }
+
+    .card-suit {
+        font-size: 16px;
+    }
+}
