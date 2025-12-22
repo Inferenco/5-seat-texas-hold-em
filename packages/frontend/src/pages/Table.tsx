@@ -7,7 +7,6 @@ import { PokerTable } from "../components/PokerTable";
 import { ActionPanel } from "../components/ActionPanel";
 import { TableInfo } from "../components/TableInfo";
 import { LifecyclePanel } from "../components/LifecyclePanel";
-import { ChipsPanel } from "../components/ChipsPanel";
 import { AdminPanel } from "../components/AdminPanel";
 import type { TableConfig, TableState, SeatInfo, GameState } from "../types";
 import "./Table.css";
@@ -118,6 +117,17 @@ export function Table() {
     useEffect(() => {
         refreshBalance();
     }, [refreshBalance, account?.address]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        const handleChipsUpdate = () => {
+            refreshBalance();
+        };
+
+        window.addEventListener("chips:updated", handleChipsUpdate);
+        return () => window.removeEventListener("chips:updated", handleChipsUpdate);
+    }, [refreshBalance]);
 
     const handleSeatSelect = (seatIndex: number) => {
         setSelectedSeat(seatIndex);
@@ -329,7 +339,6 @@ export function Table() {
                             />
                         )}
 
-                        <ChipsPanel balance={balance} onBalanceRefresh={refreshBalance} />
                     </section>
                 </main>
             </div>

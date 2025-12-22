@@ -260,55 +260,6 @@
     color: #7ff3c2;
 }
 
-.table-page .chips-panel {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--spacing-sm);
-    padding: var(--spacing-md);
-}
-
-.table-page .chips-panel .chips-header,
-.table-page .chips-panel .chips-note,
-.table-page .chips-panel .chips-warning,
-.table-page .chips-panel .chips-forms,
-.table-page .chips-panel .chip-status {
-    grid-column: 1 / -1;
-}
-
-.table-page .chips-panel .chips-balance {
-    padding: 8px 10px;
-    font-size: 12px;
-}
-
-.table-page .chips-panel .chips-balance strong {
-    font-size: 16px;
-}
-
-.table-page .chips-panel .chips-forms {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--spacing-sm);
-}
-
-.table-page .chips-panel .chip-form {
-    padding: var(--spacing-sm);
-    gap: var(--spacing-xs);
-}
-
-.table-page .chips-panel .chip-field input {
-    padding: 8px 10px;
-    font-size: 0.85rem;
-}
-
-.table-page .chips-panel .chip-actions {
-    justify-content: stretch;
-}
-
-.table-page .chips-panel .chip-actions .btn {
-    width: 100%;
-    padding: 8px 12px;
-}
-
 @keyframes panelRise {
     from {
         opacity: 0;
@@ -335,14 +286,6 @@
     .table-layout {
         grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
         gap: var(--spacing-md);
-    }
-
-    .table-page .chips-panel {
-        grid-template-columns: 1fr;
-    }
-
-    .table-page .chips-panel .chips-forms {
-        grid-template-columns: 1fr;
     }
 }
 
