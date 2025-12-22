@@ -1,7 +1,7 @@
 # 5-Seat Texas Hold'em - Technical Documentation
 
-**Version:** 2.0.0  
-**Last Updated:** 2025-12-21
+**Version:** 3.0.0  
+**Last Updated:** 2025-12-22
 
 ## Overview
 
@@ -196,6 +196,9 @@ handle_timeout(table_addr)
 | `get_table_state(addr)` | (hand_num, dealer, next_bb, fees) |
 | `is_table_paused(addr)` | bool |
 | `is_admin_only_start(addr)` | bool |
+| `get_admin(addr)` | address |
+| `get_seat_count(addr)` | (occupied, total) |
+| `get_missed_blinds(addr)` | vector\<u64\> |
 
 ### Action State
 
@@ -239,6 +242,7 @@ handle_timeout(table_addr)
 |----------|---------|
 | `get_timeout_penalty_percent()` | 10 |
 | `get_action_timeout_secs()` | 60 |
+| `get_max_seats()` | 5 |
 
 ---
 
@@ -315,7 +319,7 @@ cedra move publish --profile <profile> --assume-yes
 
 ### Testnet Contract
 ```
-0x736ddbfe79a688617f26c712f987d7e2127f6b5f537687d8ecef91be36aa557b
+0xb45d818331ec975fd8257851594c43ab9e3ebac0c6934993c09f4b6cdf3a574b
 ```
 
 ---
@@ -323,7 +327,7 @@ cedra move publish --profile <profile> --assume-yes
 ## Quick Start
 
 ```bash
-ADDR=0x736ddbfe79a688617f26c712f987d7e2127f6b5f537687d8ecef91be36aa557b
+ADDR=0xb45d818331ec975fd8257851594c43ab9e3ebac0c6934993c09f4b6cdf3a574b
 
 # Create table (5/10 blinds, 100-10000 buy-in)
 cedra move run --function-id $ADDR::texas_holdem::create_table \

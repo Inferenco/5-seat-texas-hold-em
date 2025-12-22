@@ -21,4 +21,17 @@ export default defineConfig({
       '@cedra-labs/wallet-standard',
     ],
   },
+  build: {
+    chunkSizeWarningLimit: 1200, // Cedra SDK is ~1MB, can't be split further
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split vendor chunks for better caching
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-cedra': ['@cedra-labs/ts-sdk', '@cedra-labs/wallet-adapter-core'],
+          'vendor-icons': ['lucide-react'],
+        },
+      },
+    },
+  },
 })

@@ -1,9 +1,9 @@
 # Test Report - 5-Seat Texas Hold'em
 
-**Date:** 2025-12-21  
+**Date:** 2025-12-22  
 **Framework:** Cedra Move Test Framework  
 **Status:** ✅ All Tests Passing  
-**Version:** 2.0.0 (Frontend Integration Update)
+**Version:** 3.0.0 (Bug Fixes + Admin Controls)
 
 ---
 
@@ -11,18 +11,22 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Tests | 32 |
-| Passed | 32 |
+| Total Tests | 70 |
+| Passed | 70 |
 | Failed | 0 |
+| Test Files | 8 |
 | Coverage | 5 modules |
 
 ### Features Verified
 - ✅ Core poker mechanics (hands, pots, chips)
-- ✅ Frontend integration (21 view functions)
+- ✅ Frontend integration (24 view functions)
 - ✅ Player controls (sit_out, sit_in, top_up, leave_after_hand)
-- ✅ Admin controls (14 functions)
+- ✅ Admin controls (16 functions)
 - ✅ Events module (25 event types)
 - ✅ Pause/resume, emergency abort
+- ✅ Config validation (blinds, buy-ins)
+- ✅ Missed blinds tracking
+- ✅ Dead button support
 
 ---
 
@@ -88,7 +92,64 @@
 
 ---
 
-### 5. Poker Events (`poker_events.move`) - Compile Only
+### 5. Bug Fixes (`bug_fixes_tests.move`) - 12 Tests
+
+| Test | Status | Description |
+|------|--------|-------------|
+| `test_create_table_zero_small_blind_fails` | ✅ PASS | E_ZERO_VALUE on sb=0 |
+| `test_create_table_small_blind_greater_than_big_fails` | ✅ PASS | E_INVALID_BLINDS on sb>bb |
+| `test_create_table_zero_min_buyin_fails` | ✅ PASS | E_ZERO_VALUE on min=0 |
+| `test_create_table_max_less_than_min_buyin_fails` | ✅ PASS | E_INVALID_BUY_IN on max<min |
+| `test_create_table_valid_config_succeeds` | ✅ PASS | Valid config works |
+| `test_update_blinds_zero_fails` | ✅ PASS | Can't set sb/bb to 0 |
+| `test_update_blinds_invalid_fails` | ✅ PASS | Can't set sb>bb |
+| `test_update_buyin_zero_fails` | ✅ PASS | Can't set min to 0 |
+| `test_update_buyin_invalid_fails` | ✅ PASS | Can't set max<min |
+| `test_sit_out_records_missed_blind` | ✅ PASS | Missed blinds tracked |
+| `test_sit_in_collects_missed_blind` | ✅ PASS | Missed blinds deducted |
+
+---
+
+### 6. Admin Controls (`admin_controls_tests.move`) - 15 Tests
+
+| Test | Status | Description |
+|------|--------|-------------|
+| `test_update_blinds_success` | ✅ PASS | Admin can update blinds |
+| `test_update_blinds_non_admin_fails` | ✅ PASS | Non-admin rejected |
+| `test_update_ante_success` | ✅ PASS | Admin can update ante |
+| `test_toggle_straddle_success` | ✅ PASS | Admin can toggle straddle |
+| `test_update_buyin_limits_success` | ✅ PASS | Admin can update limits |
+| `test_update_buyin_non_admin_fails` | ✅ PASS | Non-admin rejected |
+| `test_transfer_ownership_success` | ✅ PASS | Admin can transfer |
+| `test_old_admin_cannot_update_after_transfer` | ✅ PASS | Old admin loses access |
+| `test_update_fee_recipient_success` | ✅ PASS | Admin can update recipient |
+| `test_update_fee_recipient_non_admin_fails` | ✅ PASS | Non-admin rejected |
+| `test_pause_resume_table_success` | ✅ PASS | Pause/resume works |
+| `test_kick_player_success` | ✅ PASS | Admin can kick player |
+| `test_kick_player_non_admin_fails` | ✅ PASS | Non-admin rejected |
+| `test_toggle_admin_only_start` | ✅ PASS | Admin-only start toggle |
+
+---
+
+### 7. Player Actions (`player_actions_tests.move`) - 11 Tests
+
+| Test | Status | Description |
+|------|--------|-------------|
+| `test_leave_table_returns_chips` | ✅ PASS | Chips returned on leave |
+| `test_leave_table_not_at_table_fails` | ✅ PASS | E_NOT_AT_TABLE error |
+| `test_sit_out_success` | ✅ PASS | Player can sit out |
+| `test_sit_in_success` | ✅ PASS | Player can sit back in |
+| `test_top_up_success` | ✅ PASS | Player can top up |
+| `test_top_up_insufficient_wallet_fails` | ✅ PASS | E_INSUFFICIENT_CHIPS error |
+| `test_top_up_exceeds_max_fails` | ✅ PASS | E_INSUFFICIENT_CHIPS error |
+| `test_leave_after_hand_sets_flag` | ✅ PASS | Pending leave flag set |
+| `test_cancel_leave_after_hand` | ✅ PASS | Can cancel pending leave |
+| `test_get_table_state` | ✅ PASS | View function works |
+| `test_get_seat_count` | ✅ PASS | Seat count accurate |
+
+---
+
+### 8. Poker Events (`poker_events.move`) - Compile Only
 
 Events module compiles successfully with 25 event types. Event emission tested via integration.
 
@@ -119,11 +180,14 @@ cedra move test --dev --filter hand_eval
 cedra move test --dev --filter pot_manager
 cedra move test --dev --filter chips
 cedra move test --dev --filter game_flow
+cedra move test --dev --filter bug_fixes
+cedra move test --dev --filter admin_controls
+cedra move test --dev --filter player_actions
 ```
 
 ---
 
-## Output Log
+## Output Log (v3.0.0)
 
 ```
 Running Move unit tests
@@ -159,5 +223,41 @@ Running Move unit tests
 [ PASS    ] 0xcafe::game_flow_tests::test_join_with_high_buyin_fails
 [ PASS    ] 0xcafe::game_flow_tests::test_join_with_low_buyin_fails
 [ PASS    ] 0xcafe::game_flow_tests::test_join_without_chips_fails
-Test result: OK. Total tests: 32; passed: 32; failed: 0
+[ PASS    ] 0xcafe::bug_fixes_tests::test_create_table_max_less_than_min_buyin_fails
+[ PASS    ] 0xcafe::bug_fixes_tests::test_create_table_small_blind_greater_than_big_fails
+[ PASS    ] 0xcafe::bug_fixes_tests::test_create_table_valid_config_succeeds
+[ PASS    ] 0xcafe::bug_fixes_tests::test_create_table_zero_min_buyin_fails
+[ PASS    ] 0xcafe::bug_fixes_tests::test_create_table_zero_small_blind_fails
+[ PASS    ] 0xcafe::bug_fixes_tests::test_sit_in_collects_missed_blind
+[ PASS    ] 0xcafe::bug_fixes_tests::test_sit_out_records_missed_blind
+[ PASS    ] 0xcafe::bug_fixes_tests::test_update_blinds_invalid_fails
+[ PASS    ] 0xcafe::bug_fixes_tests::test_update_blinds_zero_fails
+[ PASS    ] 0xcafe::bug_fixes_tests::test_update_buyin_invalid_fails
+[ PASS    ] 0xcafe::bug_fixes_tests::test_update_buyin_zero_fails
+[ PASS    ] 0xcafe::admin_controls_tests::test_kick_player_non_admin_fails
+[ PASS    ] 0xcafe::admin_controls_tests::test_kick_player_success
+[ PASS    ] 0xcafe::admin_controls_tests::test_old_admin_cannot_update_after_transfer
+[ PASS    ] 0xcafe::admin_controls_tests::test_pause_resume_table_success
+[ PASS    ] 0xcafe::admin_controls_tests::test_toggle_admin_only_start
+[ PASS    ] 0xcafe::admin_controls_tests::test_toggle_straddle_success
+[ PASS    ] 0xcafe::admin_controls_tests::test_transfer_ownership_success
+[ PASS    ] 0xcafe::admin_controls_tests::test_update_ante_success
+[ PASS    ] 0xcafe::admin_controls_tests::test_update_blinds_non_admin_fails
+[ PASS    ] 0xcafe::admin_controls_tests::test_update_blinds_success
+[ PASS    ] 0xcafe::admin_controls_tests::test_update_buyin_limits_success
+[ PASS    ] 0xcafe::admin_controls_tests::test_update_buyin_non_admin_fails
+[ PASS    ] 0xcafe::admin_controls_tests::test_update_fee_recipient_non_admin_fails
+[ PASS    ] 0xcafe::admin_controls_tests::test_update_fee_recipient_success
+[ PASS    ] 0xcafe::player_actions_tests::test_cancel_leave_after_hand
+[ PASS    ] 0xcafe::player_actions_tests::test_get_seat_count
+[ PASS    ] 0xcafe::player_actions_tests::test_get_table_state
+[ PASS    ] 0xcafe::player_actions_tests::test_leave_after_hand_sets_flag
+[ PASS    ] 0xcafe::player_actions_tests::test_leave_table_not_at_table_fails
+[ PASS    ] 0xcafe::player_actions_tests::test_leave_table_returns_chips
+[ PASS    ] 0xcafe::player_actions_tests::test_sit_in_success
+[ PASS    ] 0xcafe::player_actions_tests::test_sit_out_success
+[ PASS    ] 0xcafe::player_actions_tests::test_top_up_exceeds_max_fails
+[ PASS    ] 0xcafe::player_actions_tests::test_top_up_insufficient_wallet_fails
+[ PASS    ] 0xcafe::player_actions_tests::test_top_up_success
+Test result: OK. Total tests: 70; passed: 70; failed: 0
 ```
