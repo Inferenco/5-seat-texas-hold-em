@@ -1,12 +1,13 @@
 .lifecycle-panel {
-    background: #0f1117;
-    border: 1px solid #1f2430;
-    border-radius: 16px;
+    position: relative;
+    background: linear-gradient(180deg, rgba(16, 20, 26, 0.96) 0%, rgba(8, 11, 15, 0.98) 100%);
+    border: 1px solid rgba(246, 194, 111, 0.18);
+    border-radius: 18px;
     padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    box-shadow: var(--shadow-soft);
 }
 
 .lifecycle-header {
@@ -17,28 +18,32 @@
 
 .lifecycle-header h3 {
     margin: 0;
-    color: #e2e8f0;
+    color: var(--color-text);
+    font-family: var(--font-display);
+    font-size: 1.1rem;
 }
 
 .lifecycle-header p {
     margin: 2px 0 0;
-    color: #94a3b8;
+    color: var(--color-text-dim);
     font-size: 0.9rem;
 }
 
 .phase-pill {
     margin-left: auto;
-    background: linear-gradient(135deg, #6ee7ff, #3b82f6);
-    color: #0b1021;
-    padding: 6px 10px;
+    background: linear-gradient(135deg, var(--color-accent) 0%, #e2a24c 100%);
+    color: #2b1b0a;
+    padding: 6px 12px;
     border-radius: 999px;
     font-weight: 700;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 .phase-status {
-    background: #0b0d13;
-    border: 1px solid #1f2430;
+    background: rgba(7, 9, 12, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     padding: 12px;
     display: flex;
@@ -48,32 +53,33 @@
 
 .phase-message {
     margin: 0;
-    color: #cbd5e1;
+    color: var(--color-text);
 }
 
 .acting-player {
     margin: 0;
-    color: #a5b4fc;
-    font-family: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 0.9rem;
+    color: var(--color-action);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
 }
 
 .deadline {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: #fcd34d;
-    font-size: 0.9rem;
+    color: var(--color-warning);
+    font-size: 0.85rem;
 }
 
 .lifecycle-card {
-    border: 1px solid #1f2430;
-    background: #0b0d13;
-    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(9, 12, 16, 0.85);
+    border-radius: 14px;
     padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
 .card-header {
@@ -84,11 +90,11 @@
 
 .card-header h4 {
     margin: 0;
-    color: #e2e8f0;
+    color: var(--color-text);
 }
 
 .card-header small {
-    color: #94a3b8;
+    color: var(--color-text-dim);
 }
 
 .secret-controls {
@@ -105,20 +111,23 @@
 }
 
 .secret-input input {
-    background: #111827;
-    color: #e2e8f0;
-    border: 1px solid #1f2937;
+    background: rgba(6, 8, 12, 0.9);
+    color: var(--color-text);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
     padding: 10px;
 }
 
 .hash-preview {
-    background: #0f172a;
-    border: 1px solid #1e293b;
+    background: rgba(8, 10, 14, 0.95);
+    border: 1px solid rgba(246, 194, 111, 0.2);
     border-radius: 8px;
     padding: 10px;
-    color: #a5b4fc;
-    font-family: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    color: var(--color-accent);
+    font-family: var(--font-mono);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .btn.action {
@@ -126,9 +135,9 @@
     align-items: center;
     gap: 8px;
     justify-content: center;
-    background: linear-gradient(135deg, #34d399, #22c55e);
+    background: linear-gradient(135deg, var(--color-action) 0%, #1b8b59 100%);
     border: none;
-    color: #0f1117;
+    color: #07140d;
     padding: 10px 14px;
     border-radius: 10px;
     font-weight: 700;
@@ -141,28 +150,28 @@
 }
 
 .btn.secondary {
-    background: #1e293b;
-    color: #e2e8f0;
-    border: 1px solid #273449;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-text);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     padding: 10px 12px;
     border-radius: 10px;
     cursor: pointer;
 }
 
 .btn.secondary:hover:not(:disabled) {
-    background: #24304a;
+    background: rgba(255, 255, 255, 0.12);
 }
 
 .hint {
-    color: #94a3b8;
+    color: var(--color-text-dim);
 }
 
 .lifecycle-status {
-    background: #0b172a;
-    border: 1px solid #1e3a8a;
+    background: rgba(15, 32, 22, 0.85);
+    border: 1px solid rgba(74, 223, 154, 0.25);
     border-radius: 10px;
     padding: 10px 12px;
-    color: #bfdbfe;
+    color: #9beac6;
 }
 
 .spin {
@@ -181,12 +190,12 @@
 
 /* Player Controls Section */
 .player-controls {
-    border-color: rgba(99, 102, 241, 0.2);
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    border-color: rgba(246, 194, 111, 0.18);
+    background: linear-gradient(135deg, rgba(246, 194, 111, 0.08) 0%, rgba(74, 223, 154, 0.08) 100%);
 }
 
 .player-controls .card-header svg {
-    color: #818cf8;
+    color: var(--color-accent);
 }
 
 .controls-grid {
@@ -206,43 +215,43 @@
 }
 
 .btn.success {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
+    background: linear-gradient(135deg, #2fb974 0%, #1b8b59 100%);
+    color: #07140d;
     border: none;
 }
 
 .btn.success:hover:not(:disabled) {
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 4px 12px rgba(47, 185, 116, 0.3);
 }
 
 .btn.warning {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    color: white;
+    background: linear-gradient(135deg, #f0b452 0%, #d98b2d 100%);
+    color: #2b1b0a;
     border: none;
 }
 
 .btn.warning:hover:not(:disabled) {
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    box-shadow: 0 4px 12px rgba(240, 180, 82, 0.3);
 }
 
 .btn.danger-outline {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    color: #fca5a5;
+    background: rgba(255, 107, 107, 0.12);
+    border: 1px solid rgba(255, 107, 107, 0.35);
+    color: #ffb3b3;
 }
 
 .btn.danger-outline:hover:not(:disabled) {
-    background: rgba(239, 68, 68, 0.2);
-    border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(255, 107, 107, 0.2);
+    border-color: rgba(255, 107, 107, 0.55);
 }
 
 .pending-notice {
     display: block;
     margin-top: 8px;
     padding: 10px 12px;
-    background: rgba(251, 191, 36, 0.1);
-    border: 1px solid rgba(251, 191, 36, 0.2);
+    background: rgba(240, 180, 82, 0.12);
+    border: 1px solid rgba(240, 180, 82, 0.25);
     border-radius: 8px;
-    color: #fcd34d;
+    color: #f6d18b;
     text-align: center;
 }

@@ -22,11 +22,11 @@ export function PokerTable({
     // Position seats around an oval table
     // Seat positions: 0=bottom, 1=bottom-left, 2=top-left, 3=top-right, 4=bottom-right
     const seatPositions = [
-        { left: "50%", bottom: "5%", transform: "translateX(-50%)" },      // 0: bottom center
-        { left: "10%", bottom: "25%", transform: "none" },                  // 1: bottom-left
-        { left: "15%", top: "15%", transform: "none" },                     // 2: top-left
-        { right: "15%", top: "15%", transform: "none" },                    // 3: top-right
-        { right: "10%", bottom: "25%", transform: "none" },                 // 4: bottom-right
+        { left: "50%", bottom: "4%", transform: "translateX(-50%)" },      // 0: bottom center
+        { left: "6%", bottom: "28%", transform: "none" },                   // 1: bottom-left
+        { left: "18%", top: "6%", transform: "none" },                      // 2: top-left
+        { right: "18%", top: "6%", transform: "none" },                     // 3: top-right
+        { right: "6%", bottom: "28%", transform: "none" },                  // 4: bottom-right
     ];
 
     const isActionOn = (seatIdx: number) =>
