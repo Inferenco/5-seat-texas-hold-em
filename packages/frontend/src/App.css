@@ -1,20 +1,26 @@
 :root {
   /* Brand colors */
-  --color-bg: #0a0a0f;
-  --color-bg-secondary: #12121a;
-  --color-bg-card: #1a1a2e;
-  --color-accent: #00ff88;
-  --color-accent-dim: rgba(0, 255, 136, 0.2);
-  --color-text: #ffffff;
-  --color-text-dim: rgba(255, 255, 255, 0.6);
-  --color-border: rgba(255, 255, 255, 0.1);
+  --color-bg: #07090c;
+  --color-bg-secondary: #0e1217;
+  --color-bg-card: rgba(16, 21, 27, 0.92);
+  --color-accent: #f2c36b;
+  --color-accent-dim: rgba(242, 195, 107, 0.2);
+  --color-action: #4adf9a;
+  --color-action-dim: rgba(74, 223, 154, 0.18);
+  --color-text: #f7f2e8;
+  --color-text-dim: rgba(247, 242, 232, 0.62);
+  --color-border: rgba(247, 242, 232, 0.1);
   --color-danger: #ff6b6b;
-  --color-warning: #ffd93d;
+  --color-warning: #f0b452;
 
   /* Poker table colors */
-  --color-felt: #0d5c36;
-  --color-felt-border: #1e8449;
-  --color-card-back: #1a1a2e;
+  --color-felt: #0b4a2a;
+  --color-felt-border: #8a5a2a;
+  --color-card-back: #151921;
+
+  /* Shadows */
+  --shadow-soft: 0 16px 32px rgba(0, 0, 0, 0.35);
+  --shadow-strong: 0 30px 60px rgba(0, 0, 0, 0.45);
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -32,7 +38,8 @@
   --radius-full: 9999px;
 
   /* Typography */
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: "Space Grotesk", "Segoe UI", sans-serif;
+  --font-display: "Cinzel", "Times New Roman", serif;
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
 }
 
@@ -62,6 +69,11 @@ body {
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
+}
+
+.main-content.table-mode {
+  max-width: none;
+  padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-xs);
 }
 
 /* Utility classes */
@@ -94,11 +106,11 @@ body {
 
   0%,
   100% {
-    box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+    box-shadow: 0 0 20px rgba(74, 223, 154, 0.25);
   }
 
   50% {
-    box-shadow: 0 0 40px rgba(0, 255, 136, 0.5);
+    box-shadow: 0 0 40px rgba(74, 223, 154, 0.45);
   }
 }
 
@@ -120,10 +132,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-dim);
+  background: rgba(255, 255, 255, 0.2);
 }

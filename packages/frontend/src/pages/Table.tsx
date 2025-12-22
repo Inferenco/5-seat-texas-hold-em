@@ -290,41 +290,47 @@ export function Table() {
                             </button>
                         </form>
                     </section>
-
-                    <ChipsPanel balance={balance} onBalanceRefresh={refreshBalance} />
                 </aside>
 
                 <main className="table-main">
-                    <PokerTable
-                        seats={seats}
-                        gameState={gameState}
-                        dealerSeat={tableState?.dealerSeat ?? 0}
-                        playerSeat={playerSeat}
-                        onSeatSelect={handleSeatSelect}
-                        selectedSeat={selectedSeat}
-                    />
+                    <section className="table-stage">
+                        <div className="table-stage-inner">
+                            <PokerTable
+                                seats={seats}
+                                gameState={gameState}
+                                dealerSeat={tableState?.dealerSeat ?? 0}
+                                playerSeat={playerSeat}
+                                onSeatSelect={handleSeatSelect}
+                                selectedSeat={selectedSeat}
+                            />
+                        </div>
+                    </section>
 
-                    {gameState && (
-                        <LifecyclePanel
-                            tableAddress={address!}
-                            gameState={gameState}
-                            seats={seats}
-                            playerSeat={playerSeat}
-                            tableState={tableState}
-                            pendingLeave={playerSeat !== null ? pendingLeaves[playerSeat] : false}
-                            onRefresh={loadTableData}
-                        />
-                    )}
+                    <section className="table-console">
+                        {connected && playerSeat !== null && gameState && (
+                            <ActionPanel
+                                tableAddress={address!}
+                                seatIndex={playerSeat}
+                                gameState={gameState}
+                                seatInfo={seats[playerSeat]!}
+                                onAction={loadTableData}
+                            />
+                        )}
 
-                    {connected && playerSeat !== null && gameState && (
-                        <ActionPanel
-                            tableAddress={address!}
-                            seatIndex={playerSeat}
-                            gameState={gameState}
-                            seatInfo={seats[playerSeat]!}
-                            onAction={loadTableData}
-                        />
-                    )}
+                        {gameState && (
+                            <LifecyclePanel
+                                tableAddress={address!}
+                                gameState={gameState}
+                                seats={seats}
+                                playerSeat={playerSeat}
+                                tableState={tableState}
+                                pendingLeave={playerSeat !== null ? pendingLeaves[playerSeat] : false}
+                                onRefresh={loadTableData}
+                            />
+                        )}
+
+                        <ChipsPanel balance={balance} onBalanceRefresh={refreshBalance} />
+                    </section>
                 </main>
             </div>
         </div>
