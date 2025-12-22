@@ -134,9 +134,9 @@ module holdemgame::chips {
         let chip_amount = (cedra_amount * CHIPS_PER_CEDRA) / OCTAS_PER_CEDRA;
         assert!(chip_amount > 0, E_ZERO_AMOUNT);
         
-        // Transfer CEDRA from player to module (treasury)
-        // Use coin::transfer for CedraCoin
-        coin::transfer<cedra_coin::CedraCoin>(player, @holdemgame, cedra_amount);
+        // Transfer CEDRA from player to FA object signer (same address used for cash_out)
+        let fa_signer_addr = object::address_from_extend_ref(&manager.extend_ref);
+        coin::transfer<cedra_coin::CedraCoin>(player, fa_signer_addr, cedra_amount);
         manager.treasury_balance = manager.treasury_balance + cedra_amount;
         
         // Mint chips to player
