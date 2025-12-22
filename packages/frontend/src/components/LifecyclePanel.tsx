@@ -35,13 +35,49 @@ function bytesToHex(bytes: Uint8Array): string {
         .join("");
 }
 
-async function hashSecret(secret: string): Promise<string | null> {
+// Returns the SHA3-256 hash as bytes for contract submission
+function hashSecretToBytes(secret: string): Uint8Array | null {
     if (!secret) return null;
-
     const encoder = new TextEncoder();
     const data = encoder.encode(secret);
-    const hashBytes = sha3_256(data);
+    return sha3_256(data);
+}
+
+// Returns the SHA3-256 hash as hex string for display
+async function hashSecretToHex(secret: string): Promise<string | null> {
+    if (!secret) return null;
+    const hashBytes = hashSecretToBytes(secret);
+    if (!hashBytes) return null;
     return bytesToHex(hashBytes);
+}
+
+function getSecretStorageKey(tableAddress: string, playerAddress: string | null | undefined): string | null {
+    if (!tableAddress || !playerAddress) return null;
+    return `holdem_secret_${tableAddress}_${playerAddress}`.toLowerCase();
+}
+
+function loadStoredSecret(tableAddress: string, playerAddress: string | null | undefined): string {
+    const key = getSecretStorageKey(tableAddress, playerAddress);
+    if (!key || typeof window === "undefined") return "";
+    try {
+        return localStorage.getItem(key) || "";
+    } catch {
+        return "";
+    }
+}
+
+function saveSecret(tableAddress: string, playerAddress: string | null | undefined, secret: string): void {
+    const key = getSecretStorageKey(tableAddress, playerAddress);
+    if (!key || typeof window === "undefined") return;
+    try {
+        if (secret) {
+            localStorage.setItem(key, secret);
+        } else {
+            localStorage.removeItem(key);
+        }
+    } catch {
+        // localStorage may be unavailable
+    }
 }
 
 export function LifecyclePanel({
@@ -57,12 +93,29 @@ export function LifecyclePanel({
     onRefresh,
 }: LifecyclePanelProps) {
     const { startHand, submitCommit, revealSecret, leaveAfterHand, cancelLeaveAfterHand, sitOut, sitIn } = useContractActions();
-    const [secret, setSecret] = useState("");
+
+    const playerAddress = playerSeat !== null ? seats[playerSeat]?.player : null;
+
+    // Load secret from localStorage on mount, keyed by table + player
+    const [secret, setSecretInternal] = useState(() => loadStoredSecret(tableAddress, playerAddress));
     const [secretHash, setSecretHash] = useState<string | null>(null);
     const [status, setStatus] = useState<string | null>(null);
     const [activeAction, setActiveAction] = useState<"start" | "commit" | "reveal" | "leave" | "sitout" | null>(null);
 
-    const playerAddress = playerSeat !== null ? seats[playerSeat]?.player : null;
+    // Wrapper to persist secret to localStorage
+    const setSecret = (newSecret: string) => {
+        setSecretInternal(newSecret);
+        saveSecret(tableAddress, playerAddress, newSecret);
+    };
+
+    // Re-load secret if player address changes (e.g. wallet switch)
+    useEffect(() => {
+        const stored = loadStoredSecret(tableAddress, playerAddress);
+        if (stored !== secret) {
+            setSecretInternal(stored);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tableAddress, playerAddress]);
 
     const isActionOnPlayer = useMemo(() => {
         if (playerSeat === null || !playerAddress || !gameState.actionOn) return false;
@@ -81,7 +134,7 @@ export function LifecyclePanel({
             return undefined;
         }
 
-        hashSecret(secret).then((value) => {
+        hashSecretToHex(secret).then((value: string | null) => {
             if (isMounted) setSecretHash(value);
         });
 
@@ -267,7 +320,9 @@ export function LifecyclePanel({
                         onClick={() =>
                             runLifecycleAction(async () => {
                                 if (!secretHash) throw new Error("Unable to hash secret.");
-                                await submitCommit(tableAddress, `0x${secretHash}`);
+                                const hashBytes = hashSecretToBytes(secret);
+                                if (!hashBytes) throw new Error("Unable to hash secret.");
+                                await submitCommit(tableAddress, hashBytes);
                             }, "commit")
                         }
                         disabled={commitDisabled}
@@ -306,7 +361,7 @@ export function LifecyclePanel({
 
                     <button
                         className="btn action"
-                        onClick={() => runLifecycleAction(() => revealSecret(tableAddress, secret), "reveal")}
+                        onClick={() => runLifecycleAction(() => revealSecret(tableAddress, new TextEncoder().encode(secret)), "reveal")}
                         disabled={revealDisabled}
                     >
                         {activeAction === "reveal" ? <Loader2 className="spin" size={16} /> : <Eye size={16} />} Reveal Secret

@@ -385,13 +385,14 @@ export function useContractActions() {
     const { signAndSubmitTransaction, account } = useWallet();
 
     const executeTransaction = useCallback(
-        async (functionId: string, args: (string | number | boolean)[]) => {
+        async (functionId: string, args: (string | number | boolean | Uint8Array)[]) => {
             if (!account) throw new Error("Wallet not connected");
 
             const response = await signAndSubmitTransaction({
                 data: {
                     function: functionId as `${string}::${string}::${string}`,
-                    functionArguments: args.map((a) => a.toString()),
+                    // Pass Uint8Array through directly; SDK serializes them as vector<u8>
+                    functionArguments: args.map((a) => a instanceof Uint8Array ? a : a.toString()),
                 },
             });
 
@@ -455,12 +456,12 @@ export function useContractActions() {
     );
 
     const submitCommit = useCallback(
-        (tableAddress: string, hash: string) => executeTransaction(`${MODULES.TEXAS_HOLDEM}::submit_commit`, [tableAddress, hash]),
+        (tableAddress: string, hash: Uint8Array) => executeTransaction(`${MODULES.TEXAS_HOLDEM}::submit_commit`, [tableAddress, hash]),
         [executeTransaction]
     );
 
     const revealSecret = useCallback(
-        (tableAddress: string, secret: string) => executeTransaction(`${MODULES.TEXAS_HOLDEM}::reveal_secret`, [tableAddress, secret]),
+        (tableAddress: string, secret: Uint8Array) => executeTransaction(`${MODULES.TEXAS_HOLDEM}::reveal_secret`, [tableAddress, secret]),
         [executeTransaction]
     );
 
