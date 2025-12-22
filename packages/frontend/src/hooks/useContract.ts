@@ -236,6 +236,79 @@ export function useTableView() {
         };
     }, [getGamePhase, getPotSize, getCommunityCards, getCurrentBets, getPlayerStatuses, getMinRaise, getActionOn]);
 
+    const isPaused = useCallback(async (tableAddress: string): Promise<boolean> => {
+        try {
+            const result = await cedra.view({
+                payload: {
+                    function: `${MODULES.TEXAS_HOLDEM}::is_paused`,
+                    functionArguments: [tableAddress],
+                },
+            });
+            return result[0] as boolean;
+        } catch {
+            return false;
+        }
+    }, []);
+
+    const isAdminOnlyStart = useCallback(async (tableAddress: string): Promise<boolean> => {
+        try {
+            const result = await cedra.view({
+                payload: {
+                    function: `${MODULES.TEXAS_HOLDEM}::is_admin_only_start`,
+                    functionArguments: [tableAddress],
+                },
+            });
+            return result[0] as boolean;
+        } catch {
+            return false;
+        }
+    }, []);
+
+    const getAdmin = useCallback(async (tableAddress: string): Promise<string> => {
+        try {
+            const result = await cedra.view({
+                payload: {
+                    function: `${MODULES.TEXAS_HOLDEM}::get_admin`,
+                    functionArguments: [tableAddress],
+                },
+            });
+            return result[0] as string;
+        } catch {
+            return "";
+        }
+    }, []);
+
+    const getPendingLeaves = useCallback(async (tableAddress: string): Promise<boolean[]> => {
+        try {
+            const result = await cedra.view({
+                payload: {
+                    function: `${MODULES.TEXAS_HOLDEM}::get_pending_leaves`,
+                    functionArguments: [tableAddress],
+                },
+            });
+            const leaves = result[0];
+            if (!Array.isArray(leaves)) return [false, false, false, false, false];
+            return leaves as boolean[];
+        } catch {
+            return [false, false, false, false, false];
+        }
+    }, []);
+
+    const getSeatCount = useCallback(async (tableAddress: string): Promise<{ occupied: number; total: number }> => {
+        try {
+            const result = await cedra.view({
+                payload: {
+                    function: `${MODULES.TEXAS_HOLDEM}::get_seat_count`,
+                    functionArguments: [tableAddress],
+                },
+            });
+            const [occupied, total] = result as [string, string];
+            return { occupied: parseInt(occupied), total: parseInt(total) };
+        } catch {
+            return { occupied: 0, total: 5 };
+        }
+    }, []);
+
     return {
         getTableConfig,
         getTableState,
@@ -250,6 +323,11 @@ export function useTableView() {
         getMinRaise,
         getCallAmount,
         getFullGameState,
+        isPaused,
+        isAdminOnlyStart,
+        getAdmin,
+        getPendingLeaves,
+        getSeatCount,
     };
 }
 
@@ -417,6 +495,73 @@ export function useContractActions() {
         [executeTransaction]
     );
 
+    // Leave after hand controls
+    const leaveAfterHand = useCallback(
+        (tableAddress: string) => executeTransaction(`${MODULES.TEXAS_HOLDEM}::leave_after_hand`, [tableAddress]),
+        [executeTransaction]
+    );
+
+    const cancelLeaveAfterHand = useCallback(
+        (tableAddress: string) => executeTransaction(`${MODULES.TEXAS_HOLDEM}::cancel_leave_after_hand`, [tableAddress]),
+        [executeTransaction]
+    );
+
+    // Admin controls
+    const pauseTable = useCallback(
+        (tableAddress: string) => executeTransaction(`${MODULES.TEXAS_HOLDEM}::pause_table`, [tableAddress]),
+        [executeTransaction]
+    );
+
+    const resumeTable = useCallback(
+        (tableAddress: string) => executeTransaction(`${MODULES.TEXAS_HOLDEM}::resume_table`, [tableAddress]),
+        [executeTransaction]
+    );
+
+    const kickPlayer = useCallback(
+        (tableAddress: string, seatIndex: number) =>
+            executeTransaction(`${MODULES.TEXAS_HOLDEM}::kick_player`, [tableAddress, seatIndex]),
+        [executeTransaction]
+    );
+
+    const forceSitOut = useCallback(
+        (tableAddress: string, seatIndex: number) =>
+            executeTransaction(`${MODULES.TEXAS_HOLDEM}::force_sit_out`, [tableAddress, seatIndex]),
+        [executeTransaction]
+    );
+
+    const toggleAdminOnlyStart = useCallback(
+        (tableAddress: string, enabled: boolean) =>
+            executeTransaction(`${MODULES.TEXAS_HOLDEM}::toggle_admin_only_start`, [tableAddress, enabled]),
+        [executeTransaction]
+    );
+
+    const updateBlinds = useCallback(
+        (tableAddress: string, smallBlind: number, bigBlind: number) =>
+            executeTransaction(`${MODULES.TEXAS_HOLDEM}::update_blinds`, [tableAddress, smallBlind, bigBlind]),
+        [executeTransaction]
+    );
+
+    const updateBuyInLimits = useCallback(
+        (tableAddress: string, minBuyIn: number, maxBuyIn: number) =>
+            executeTransaction(`${MODULES.TEXAS_HOLDEM}::update_buy_in_limits`, [tableAddress, minBuyIn, maxBuyIn]),
+        [executeTransaction]
+    );
+
+    const closeTable = useCallback(
+        (tableAddress: string) => executeTransaction(`${MODULES.TEXAS_HOLDEM}::close_table`, [tableAddress]),
+        [executeTransaction]
+    );
+
+    const emergencyAbort = useCallback(
+        (tableAddress: string) => executeTransaction(`${MODULES.TEXAS_HOLDEM}::emergency_abort`, [tableAddress]),
+        [executeTransaction]
+    );
+
+    const handleTimeout = useCallback(
+        (tableAddress: string) => executeTransaction(`${MODULES.TEXAS_HOLDEM}::handle_timeout`, [tableAddress]),
+        [executeTransaction]
+    );
+
     return {
         // Chips
         buyChips,
@@ -429,10 +574,13 @@ export function useContractActions() {
         sitOut,
         sitIn,
         topUp,
+        leaveAfterHand,
+        cancelLeaveAfterHand,
         // Hand lifecycle
         startHand,
         submitCommit,
         revealSecret,
+        handleTimeout,
         // Player actions
         fold,
         check,
@@ -440,6 +588,16 @@ export function useContractActions() {
         raiseTo,
         allIn,
         straddle,
+        // Admin controls
+        pauseTable,
+        resumeTable,
+        kickPlayer,
+        forceSitOut,
+        toggleAdminOnlyStart,
+        updateBlinds,
+        updateBuyInLimits,
+        closeTable,
+        emergencyAbort,
     };
 }
 

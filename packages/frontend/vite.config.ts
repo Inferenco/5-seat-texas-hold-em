@@ -5,6 +5,9 @@ import { resolve } from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    allowedHosts: true, // Allow ngrok and other tunneling services
+  },
   resolve: {
     alias: {
       // Fix for @cedra-labs/wallet-adapter-plugin resolution issue
@@ -20,5 +23,18 @@ export default defineConfig({
       '@cedra-labs/ts-sdk',
       '@cedra-labs/wallet-standard',
     ],
+  },
+  build: {
+    chunkSizeWarningLimit: 1200, // Cedra SDK is ~1MB, can't be split further
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split vendor chunks for better caching
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-cedra': ['@cedra-labs/ts-sdk', '@cedra-labs/wallet-adapter-core'],
+          'vendor-icons': ['lucide-react'],
+        },
+      },
+    },
   },
 })

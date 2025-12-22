@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Clock3, Eye, KeyRound, Loader2, Play, Shield } from "lucide-react";
+import { Clock3, Eye, KeyRound, Loader2, Play, Shield, LogOut, Power, PowerOff } from "lucide-react";
 import { GAME_PHASES, PHASE_NAMES } from "../config/contracts";
 import { useContractActions } from "../hooks/useContract";
 import type { GameState, SeatInfo, TableState } from "../types";
@@ -11,6 +11,7 @@ interface LifecyclePanelProps {
     seats: (SeatInfo | null)[];
     playerSeat: number | null;
     tableState: TableState | null;
+    pendingLeave?: boolean;
     onRefresh: () => void | Promise<void>;
 }
 
@@ -40,13 +41,14 @@ export function LifecyclePanel({
     seats,
     playerSeat,
     tableState,
+    pendingLeave = false,
     onRefresh,
 }: LifecyclePanelProps) {
-    const { startHand, submitCommit, revealSecret } = useContractActions();
+    const { startHand, submitCommit, revealSecret, leaveAfterHand, cancelLeaveAfterHand, sitOut, sitIn } = useContractActions();
     const [secret, setSecret] = useState("");
     const [secretHash, setSecretHash] = useState<string | null>(null);
     const [status, setStatus] = useState<string | null>(null);
-    const [activeAction, setActiveAction] = useState<"start" | "commit" | "reveal" | null>(null);
+    const [activeAction, setActiveAction] = useState<"start" | "commit" | "reveal" | "leave" | "sitout" | null>(null);
 
     const playerAddress = playerSeat !== null ? seats[playerSeat]?.player : null;
 
@@ -80,14 +82,14 @@ export function LifecyclePanel({
         const randomBytes = window.crypto?.getRandomValues(new Uint8Array(16));
         const generated = randomBytes
             ? Array.from(randomBytes)
-                  .map((b) => b.toString(16).padStart(2, "0"))
-                  .join("")
+                .map((b) => b.toString(16).padStart(2, "0"))
+                .join("")
             : Math.random().toString(36).slice(2);
         setSecret(generated);
         setStatus("Generated a new secret. Keep it safe for reveal phase.");
     };
 
-    const runLifecycleAction = async (action: () => Promise<unknown>, actionName: "start" | "commit" | "reveal") => {
+    const runLifecycleAction = async (action: () => Promise<unknown>, actionName: "start" | "commit" | "reveal" | "leave" | "sitout") => {
         try {
             setActiveAction(actionName);
             setStatus(null);
@@ -260,6 +262,65 @@ export function LifecyclePanel({
                         {activeAction === "reveal" ? <Loader2 className="spin" size={16} /> : <Eye size={16} />} Reveal Secret
                     </button>
                     {!isActionOnPlayer && <small className="hint">Waiting for your turn to reveal.</small>}
+                </div>
+            )}
+
+            {/* Player Controls - shown when player is seated */}
+            {playerSeat !== null && seats[playerSeat] && (
+                <div className="lifecycle-card player-controls">
+                    <div className="card-header">
+                        <Power size={18} />
+                        <div>
+                            <h4>Player Controls</h4>
+                            <small>Manage your session at this table</small>
+                        </div>
+                    </div>
+                    <div className="controls-grid">
+                        {/* Sit Out / Sit In Toggle */}
+                        <button
+                            className={`btn ${seats[playerSeat]?.sittingOut ? "success" : "secondary"}`}
+                            onClick={() =>
+                                runLifecycleAction(
+                                    () => seats[playerSeat]?.sittingOut ? sitIn(tableAddress) : sitOut(tableAddress),
+                                    "sitout"
+                                )
+                            }
+                            disabled={activeAction !== null}
+                        >
+                            {activeAction === "sitout" ? (
+                                <Loader2 className="spin" size={16} />
+                            ) : seats[playerSeat]?.sittingOut ? (
+                                <Power size={16} />
+                            ) : (
+                                <PowerOff size={16} />
+                            )}
+                            {seats[playerSeat]?.sittingOut ? "Sit In" : "Sit Out"}
+                        </button>
+
+                        {/* Leave After Hand */}
+                        <button
+                            className={`btn ${pendingLeave ? "warning" : "danger-outline"}`}
+                            onClick={() =>
+                                runLifecycleAction(
+                                    () => pendingLeave ? cancelLeaveAfterHand(tableAddress) : leaveAfterHand(tableAddress),
+                                    "leave"
+                                )
+                            }
+                            disabled={activeAction !== null}
+                        >
+                            {activeAction === "leave" ? (
+                                <Loader2 className="spin" size={16} />
+                            ) : (
+                                <LogOut size={16} />
+                            )}
+                            {pendingLeave ? "Cancel Leave" : "Leave After Hand"}
+                        </button>
+                    </div>
+                    {pendingLeave && (
+                        <small className="pending-notice">
+                            You will leave the table after the current hand ends.
+                        </small>
+                    )}
                 </div>
             )}
 

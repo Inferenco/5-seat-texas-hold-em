@@ -8,13 +8,14 @@ import { ActionPanel } from "../components/ActionPanel";
 import { TableInfo } from "../components/TableInfo";
 import { LifecyclePanel } from "../components/LifecyclePanel";
 import { ChipsPanel } from "../components/ChipsPanel";
+import { AdminPanel } from "../components/AdminPanel";
 import type { TableConfig, TableState, SeatInfo, GameState } from "../types";
 import "./Table.css";
 
 export function Table() {
     const { address } = useParams<{ address: string }>();
     const { connected, account } = useWallet();
-    const { getTableConfig, getTableState, getAllSeats, getFullGameState } = useTableView();
+    const { getTableConfig, getTableState, getAllSeats, getFullGameState, getAdmin, isPaused, isAdminOnlyStart, getPendingLeaves } = useTableView();
     const { joinTable } = useContractActions();
     const { getBalance } = useChipsView();
 
@@ -31,6 +32,10 @@ export function Table() {
     const [joinError, setJoinError] = useState<string | null>(null);
     const [joinSuccess, setJoinSuccess] = useState<string | null>(null);
     const [joining, setJoining] = useState(false);
+    const [adminAddress, setAdminAddress] = useState<string>("");
+    const [tablePaused, setTablePaused] = useState(false);
+    const [adminOnlyStart, setAdminOnlyStart] = useState(false);
+    const [pendingLeaves, setPendingLeaves] = useState<boolean[]>([false, false, false, false, false]);
 
     const loadTableData = async (isBackground = false) => {
         if (!address) return;
@@ -41,17 +46,25 @@ export function Table() {
                 setError(null);
             }
 
-            const [configData, stateData, seatsData, gameData] = await Promise.all([
+            const [configData, stateData, seatsData, gameData, admin, paused, adminOnly, leaves] = await Promise.all([
                 getTableConfig(address),
                 getTableState(address),
                 getAllSeats(address),
                 getFullGameState(address),
+                getAdmin(address),
+                isPaused(address),
+                isAdminOnlyStart(address),
+                getPendingLeaves(address),
             ]);
 
             setConfig(configData);
             setTableState(stateData);
             setSeats(seatsData);
             setGameState(gameData);
+            setAdminAddress(admin);
+            setTablePaused(paused);
+            setAdminOnlyStart(adminOnly);
+            setPendingLeaves(leaves);
 
             // Default to first available seat if none selected
             const firstEmptySeat = seatsData.findIndex((s) => !s);
@@ -205,7 +218,20 @@ export function Table() {
                         <TableInfo config={config} state={tableState} address={address!} />
                     )}
 
-                    <ChipsPanel balance={balance} onBalanceRefresh={refreshBalance} />
+                    {connected && account?.address && config && (
+                        <AdminPanel
+                            tableAddress={address!}
+                            isAdmin={adminAddress.toLowerCase() === account.address.toString().toLowerCase()}
+                            isPaused={tablePaused}
+                            isAdminOnlyStart={adminOnlyStart}
+                            seats={seats}
+                            smallBlind={config.smallBlind}
+                            bigBlind={config.bigBlind}
+                            minBuyIn={config.minBuyIn}
+                            maxBuyIn={config.maxBuyIn}
+                            onRefresh={loadTableData}
+                        />
+                    )}
 
                     <section className="join-panel">
                         <div className="panel-header">
@@ -264,6 +290,8 @@ export function Table() {
                             </button>
                         </form>
                     </section>
+
+                    <ChipsPanel balance={balance} onBalanceRefresh={refreshBalance} />
                 </aside>
 
                 <main className="table-main">
@@ -283,6 +311,7 @@ export function Table() {
                             seats={seats}
                             playerSeat={playerSeat}
                             tableState={tableState}
+                            pendingLeave={playerSeat !== null ? pendingLeaves[playerSeat] : false}
                             onRefresh={loadTableData}
                         />
                     )}
