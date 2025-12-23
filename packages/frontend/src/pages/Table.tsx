@@ -1,13 +1,13 @@
 import { useParams } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
+import { Shield, X } from "lucide-react";
 import { useWallet } from "../components/wallet-provider";
 import { useChipsView, useContractActions, useTableView } from "../hooks/useContract";
 import { PokerTable } from "../components/PokerTable";
 import { ActionPanel } from "../components/ActionPanel";
 import { TableInfo } from "../components/TableInfo";
 import { LifecyclePanel } from "../components/LifecyclePanel";
-import { ChipsPanel } from "../components/ChipsPanel";
 import { AdminPanel } from "../components/AdminPanel";
 import type { TableConfig, TableState, SeatInfo, GameState } from "../types";
 import "./Table.css";
@@ -15,7 +15,7 @@ import "./Table.css";
 export function Table() {
     const { address } = useParams<{ address: string }>();
     const { connected, account } = useWallet();
-    const { getTableConfig, getTableState, getAllSeats, getFullGameState, getAdmin, isPaused, isAdminOnlyStart, getPendingLeaves } = useTableView();
+    const { getTableConfig, getTableState, getAllSeats, getFullGameState, getAdmin, isPaused, isAdminOnlyStart, getPendingLeaves, getHoleCards, getPlayersInHand } = useTableView();
     const { joinTable } = useContractActions();
     const { getBalance } = useChipsView();
 
@@ -36,6 +36,14 @@ export function Table() {
     const [tablePaused, setTablePaused] = useState(false);
     const [adminOnlyStart, setAdminOnlyStart] = useState(false);
     const [pendingLeaves, setPendingLeaves] = useState<boolean[]>([false, false, false, false, false]);
+    const [adminOpen, setAdminOpen] = useState(false);
+    const [holeCards, setHoleCards] = useState<number[][]>([]);
+    const [playersInHand, setPlayersInHand] = useState<number[]>([]);
+
+    const isAdmin = useMemo(() => {
+        if (!connected || !account?.address || !adminAddress) return false;
+        return adminAddress.toLowerCase() === account.address.toString().toLowerCase();
+    }, [connected, account?.address, adminAddress]);
 
     const loadTableData = async (isBackground = false) => {
         if (!address) return;
@@ -46,7 +54,7 @@ export function Table() {
                 setError(null);
             }
 
-            const [configData, stateData, seatsData, gameData, admin, paused, adminOnly, leaves] = await Promise.all([
+            const [configData, stateData, seatsData, gameData, admin, paused, adminOnly, leaves, holeCardsData, playersData] = await Promise.all([
                 getTableConfig(address),
                 getTableState(address),
                 getAllSeats(address),
@@ -55,6 +63,8 @@ export function Table() {
                 isPaused(address),
                 isAdminOnlyStart(address),
                 getPendingLeaves(address),
+                getHoleCards(address),
+                getPlayersInHand(address),
             ]);
 
             setConfig(configData);
@@ -65,6 +75,11 @@ export function Table() {
             setTablePaused(paused);
             setAdminOnlyStart(adminOnly);
             setPendingLeaves(leaves);
+            setHoleCards(holeCardsData);
+            setPlayersInHand(playersData);
+
+            // Debug: Log hole cards data
+            console.log("DEBUG hole cards:", { holeCardsData, playersData, phase: gameData.phase });
 
             // Default to first available seat if none selected
             const firstEmptySeat = seatsData.findIndex((s) => !s);
@@ -118,6 +133,27 @@ export function Table() {
     useEffect(() => {
         refreshBalance();
     }, [refreshBalance, account?.address]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        const handleChipsUpdate = () => {
+            refreshBalance();
+        };
+
+        window.addEventListener("chips:updated", handleChipsUpdate);
+        return () => window.removeEventListener("chips:updated", handleChipsUpdate);
+    }, [refreshBalance]);
+
+    // ESC key handler for admin modal
+    useEffect(() => {
+        if (!adminOpen) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") setAdminOpen(false);
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [adminOpen]);
 
     const handleSeatSelect = (seatIndex: number) => {
         setSelectedSeat(seatIndex);
@@ -218,19 +254,17 @@ export function Table() {
                         <TableInfo config={config} state={tableState} address={address!} />
                     )}
 
-                    {connected && account?.address && config && (
-                        <AdminPanel
-                            tableAddress={address!}
-                            isAdmin={adminAddress.toLowerCase() === account.address.toString().toLowerCase()}
-                            isPaused={tablePaused}
-                            isAdminOnlyStart={adminOnlyStart}
-                            seats={seats}
-                            smallBlind={config.smallBlind}
-                            bigBlind={config.bigBlind}
-                            minBuyIn={config.minBuyIn}
-                            maxBuyIn={config.maxBuyIn}
-                            onRefresh={loadTableData}
-                        />
+                    {isAdmin && config && (
+                        <button
+                            type="button"
+                            className={`admin-trigger${adminOpen ? " active" : ""}`}
+                            onClick={() => setAdminOpen(true)}
+                            aria-expanded={adminOpen}
+                            aria-haspopup="dialog"
+                        >
+                            <Shield size={16} />
+                            Admin
+                        </button>
                     )}
 
                     <section className="join-panel">
@@ -302,6 +336,8 @@ export function Table() {
                                 playerSeat={playerSeat}
                                 onSeatSelect={handleSeatSelect}
                                 selectedSeat={selectedSeat}
+                                holeCards={holeCards}
+                                playersInHand={playersInHand}
                             />
                         </div>
                     </section>
@@ -325,14 +361,49 @@ export function Table() {
                                 playerSeat={playerSeat}
                                 tableState={tableState}
                                 pendingLeave={playerSeat !== null ? pendingLeaves[playerSeat] : false}
+                                isAdmin={connected && !!account?.address && adminAddress.toLowerCase() === account.address.toString().toLowerCase()}
+                                isAdminOnlyStart={adminOnlyStart}
+                                isPaused={tablePaused}
                                 onRefresh={loadTableData}
                             />
                         )}
 
-                        <ChipsPanel balance={balance} onBalanceRefresh={refreshBalance} />
                     </section>
                 </main>
             </div>
+
+            {/* Admin Modal */}
+            {adminOpen && config && (
+                <div className="admin-overlay" onClick={() => setAdminOpen(false)}>
+                    <div
+                        className="admin-modal"
+                        role="dialog"
+                        aria-label="Admin controls"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            type="button"
+                            className="admin-close"
+                            onClick={() => setAdminOpen(false)}
+                            aria-label="Close admin controls"
+                        >
+                            <X size={16} />
+                        </button>
+                        <AdminPanel
+                            tableAddress={address!}
+                            isAdmin={isAdmin}
+                            isPaused={tablePaused}
+                            isAdminOnlyStart={adminOnlyStart}
+                            seats={seats}
+                            smallBlind={config.smallBlind}
+                            bigBlind={config.bigBlind}
+                            minBuyIn={config.minBuyIn}
+                            maxBuyIn={config.maxBuyIn}
+                            onRefresh={loadTableData}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

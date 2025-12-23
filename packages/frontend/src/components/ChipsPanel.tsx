@@ -187,6 +187,9 @@ export function ChipsPanel({ balance, onBalanceRefresh }: ChipsPanelProps) {
             setStatus({ type: "success", message: `Bought ${buyChipEstimate.toLocaleString()} chips.` });
             setBuyAmount("");
             await refreshBalance();
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new Event("chips:updated"));
+            }
         } catch (err) {
             const message = err instanceof Error ? err.message : "Failed to buy chips.";
             setStatus({ type: "error", message });
@@ -249,6 +252,9 @@ export function ChipsPanel({ balance, onBalanceRefresh }: ChipsPanelProps) {
             });
             setCashAmount("");
             await refreshBalance();
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(new Event("chips:updated"));
+            }
         } catch (err) {
             const message = err instanceof Error ? err.message : "Failed to cash out chips.";
             setStatus({ type: "error", message });
