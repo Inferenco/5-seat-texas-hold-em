@@ -388,11 +388,18 @@ export function useContractActions() {
         async (functionId: string, args: (string | number | boolean | Uint8Array)[]) => {
             if (!account) throw new Error("Wallet not connected");
 
+            // Convert Uint8Array to array of numbers for vector<u8> params
+            const serializedArgs = args.map((a) => {
+                if (a instanceof Uint8Array) {
+                    return Array.from(a);
+                }
+                return a;
+            });
+
             const response = await signAndSubmitTransaction({
                 data: {
                     function: functionId as `${string}::${string}::${string}`,
-                    // Cedra SDK accepts Uint8Array for vector<u8>; strings are UTF-8 encoded, not hex-decoded.
-                    functionArguments: args,
+                    functionArguments: serializedArgs,
                 },
             });
 
