@@ -92,7 +92,7 @@ export function LifecyclePanel({
     isPaused = false,
     onRefresh,
 }: LifecyclePanelProps) {
-    const { startHand, submitCommit, revealSecret, leaveAfterHand, cancelLeaveAfterHand, sitOut, sitIn } = useContractActions();
+    const { startHand, submitCommit, revealSecret, leaveTable, leaveAfterHand, cancelLeaveAfterHand, sitOut, sitIn } = useContractActions();
 
     const playerAddress = playerSeat !== null ? seats[playerSeat]?.player : null;
 
@@ -424,26 +424,49 @@ export function LifecyclePanel({
                             {seats[playerSeat]?.sittingOut ? "Sit In" : "Sit Out"}
                         </button>
 
-                        {/* Leave After Hand */}
-                        <button
-                            className={`btn ${pendingLeave ? "warning" : "danger-outline"}`}
-                            onClick={() =>
-                                runLifecycleAction(
-                                    () => pendingLeave ? cancelLeaveAfterHand(tableAddress) : leaveAfterHand(tableAddress),
-                                    "leave"
-                                )
-                            }
-                            disabled={activeAction !== null}
-                        >
-                            {activeAction === "leave" ? (
-                                <Loader2 className="spin" size={16} />
-                            ) : (
-                                <LogOut size={16} />
-                            )}
-                            {pendingLeave ? "Cancel Leave" : "Leave After Hand"}
-                        </button>
+                        {/* Leave Table Now - only shown when no hand is in progress */}
+                        {gameState.phase === GAME_PHASES.WAITING && (
+                            <button
+                                className="btn danger"
+                                onClick={() =>
+                                    runLifecycleAction(
+                                        () => leaveTable(tableAddress),
+                                        "leave"
+                                    )
+                                }
+                                disabled={activeAction !== null}
+                            >
+                                {activeAction === "leave" ? (
+                                    <Loader2 className="spin" size={16} />
+                                ) : (
+                                    <LogOut size={16} />
+                                )}
+                                Leave Table
+                            </button>
+                        )}
+
+                        {/* Leave After Hand - only shown during active hand */}
+                        {gameState.phase !== GAME_PHASES.WAITING && (
+                            <button
+                                className={`btn ${pendingLeave ? "warning" : "danger-outline"}`}
+                                onClick={() =>
+                                    runLifecycleAction(
+                                        () => pendingLeave ? cancelLeaveAfterHand(tableAddress) : leaveAfterHand(tableAddress),
+                                        "leave"
+                                    )
+                                }
+                                disabled={activeAction !== null}
+                            >
+                                {activeAction === "leave" ? (
+                                    <Loader2 className="spin" size={16} />
+                                ) : (
+                                    <LogOut size={16} />
+                                )}
+                                {pendingLeave ? "Cancel Leave" : "Leave After Hand"}
+                            </button>
+                        )}
                     </div>
-                    {pendingLeave && (
+                    {pendingLeave && gameState.phase !== GAME_PHASES.WAITING && (
                         <small className="pending-notice">
                             You will leave the table after the current hand ends.
                         </small>
