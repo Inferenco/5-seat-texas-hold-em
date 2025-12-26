@@ -2,8 +2,8 @@
  * Contract configuration for the Texas Hold'em game
  */
 
-// Deployed contract address on Cedra testnet (holdem_deployer_v2 profile)
-export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || "0xfab3ac3aafdae5636d13a04605890867e2c30d8be8c8e9618cb7b9096c761fd3";
+// Deployed contract address on Cedra testnet (holdem_deployer_v5 profile)
+export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || "0x4d5a5fa1dae6d81ed71492a873fc358766a2d55d7020c44bd5b9e68f9ca1dbf5";
 
 // Module names
 export const MODULES = {
@@ -89,4 +89,4 @@ export const COMMIT_TIMEOUT_SECS = 120;
 export const REVEAL_TIMEOUT_SECS = 120;
 
 // Fee
-export const FEE_BASIS_POINTS = 30; // 0.3%
+export const FEE_BASIS_POINTS = 50; // 0.5%

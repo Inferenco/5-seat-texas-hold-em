@@ -1,7 +1,7 @@
 # 5-Seat Texas Hold'em - Technical Documentation
 
-**Version:** 3.0.0  
-**Last Updated:** 2025-12-22
+**Version:** 6.0.0  
+**Last Updated:** 2025-12-26
 
 ## Overview
 
@@ -22,6 +22,48 @@ A fully on-chain casino-grade Texas Hold'em poker game for 5 players, built on t
 │       chips.move          │         hand_eval.move           │
 │    (Fungible Asset)       │      (Hand Evaluation)           │
 └─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Contract Workflow
+
+```mermaid
+flowchart TB
+    subgraph Setup["🎰 Table Setup"]
+        A[Deploy Contract] --> B[init_fee_config]
+        B --> C[create_table]
+        C --> D[join_table]
+    end
+    
+    subgraph HandFlow["🃏 Hand Lifecycle"]
+        E[start_hand] --> F[COMMIT Phase]
+        F -->|submit_commit| G{All Committed?}
+        G -->|No| F
+        G -->|Yes| H[REVEAL Phase]
+        H -->|reveal_secret| I{All Revealed?}
+        I -->|No| H
+        I -->|Yes| J[Shuffle & Deal]
+    end
+    
+    subgraph Betting["💰 Betting Rounds"]
+        J --> K[PREFLOP]
+        K -->|Player Actions| L{Round Complete?}
+        L -->|No| K
+        L -->|Yes| M{One Player?}
+        M -->|Yes| R[Fold Win]
+        M -->|No| N[FLOP → TURN → RIVER]
+        N --> Q[SHOWDOWN]
+    end
+    
+    subgraph Resolution["🏆 Resolution"]
+        Q --> S[Evaluate Hands]
+        R --> T[Fee Accumulator]
+        S --> T
+        T --> U[Distribute Pot]
+        U --> V[Next Hand]
+        V --> E
+    end
 ```
 
 ---
@@ -130,7 +172,7 @@ Remainder chip goes to first-to-act winner (left of dealer).
 ### Table Management
 
 ```move
-create_table(admin, sb, bb, min, max, fee_recipient, ante, straddle_enabled)
+create_table(admin, sb, bb, min, max, ante, straddle_enabled)
 join_table(player, table_addr, seat_idx, buy_in)
 leave_table(player, table_addr)
 close_table(admin, table_addr)  // Delete table, refund chips
@@ -175,7 +217,6 @@ update_buy_in_limits(admin, table_addr, min, max)
 kick_player(admin, table_addr, seat_idx)
 force_sit_out(admin, table_addr, seat_idx)
 transfer_ownership(admin, table_addr, new_admin)
-update_fee_recipient(admin, table_addr, new_recipient)
 pause_table(admin, table_addr)
 resume_table(admin, table_addr)
 toggle_admin_only_start(admin, table_addr, enabled)
@@ -183,9 +224,22 @@ emergency_abort(admin, table_addr)  // Refund all bets
 handle_timeout(table_addr)
 ```
 
+### Global Fee Configuration
+
+```move
+// Called once after deployment by module deployer
+init_fee_config(deployer, fee_collector)
+
+// Update fee collector address (fee admin only)
+update_fee_collector(admin, new_collector)
+
+// Transfer fee admin rights
+transfer_fee_admin(admin, new_admin)
+```
+
 ---
 
-## View Functions (21)
+## View Functions
 
 ### Table Metadata
 
@@ -199,6 +253,16 @@ handle_timeout(table_addr)
 | `get_admin(addr)` | address |
 | `get_seat_count(addr)` | (occupied, total) |
 | `get_missed_blinds(addr)` | vector\<u64\> |
+
+### Fee Functions
+
+| Function | Returns |
+|----------|---------|
+| `get_fee_collector()` | Current fee collector address |
+| `get_fee_admin()` | Current fee admin address |
+| `is_fee_config_initialized()` | bool |
+| `get_fee_accumulator(table_addr)` | Current accumulator value (basis-points) |
+| `get_fee_basis_points()` | Fee rate (50 = 0.5%) |
 
 ### Action State
 
@@ -219,9 +283,9 @@ handle_timeout(table_addr)
 | `get_seat_info(addr, idx)` | (player, chips, sitting_out) |
 | `get_seat_info_full(addr, idx)` | (player, chips, sitting_out, bet, status) |
 | `get_player_seat(addr, player)` | seat_idx |
-| `get_players_in_hand(addr)` | vector\<u64> |
-| `get_player_statuses(addr)` | vector\<u8> |
-| `get_pending_leaves(addr)` | vector\<bool> |
+| `get_players_in_hand(addr)` | vector\<u64\> |
+| `get_player_statuses(addr)` | vector\<u8\> |
+| `get_pending_leaves(addr)` | vector\<bool\> |
 
 ### Game State
 
@@ -229,11 +293,11 @@ handle_timeout(table_addr)
 |----------|---------|
 | `get_game_phase(addr)` | u8 |
 | `get_pot_size(addr)` | u64 |
-| `get_community_cards(addr)` | vector\<u8> |
-| `get_commit_status(addr)` | vector\<bool> |
-| `get_reveal_status(addr)` | vector\<bool> |
-| `get_current_bets(addr)` | vector\<u64> |
-| `get_total_invested(addr)` | vector\<u64> |
+| `get_community_cards(addr)` | vector\<u8\> |
+| `get_commit_status(addr)` | vector\<bool\> |
+| `get_reveal_status(addr)` | vector\<bool\> |
+| `get_current_bets(addr)` | vector\<u64\> |
+| `get_total_invested(addr)` | vector\<u64\> |
 | `get_call_amount(addr, idx)` | u64 |
 
 ### Constants
@@ -286,13 +350,50 @@ seed = SHA3_256(secret_1 || secret_2 || ... || secret_n)
 
 ## Service Fees
 
+### Fractional Fee Accumulator
+
 ```move
-FEE_BASIS_POINTS = 30  // 0.3%
+FEE_BASIS_POINTS = 50  // 0.5%
 ```
 
-- Applied to all pot distributions
-- Sent to `fee_recipient` address
-- Tracked in `total_fees_collected`
+The fee system uses a **fractional accumulator** for precise fee collection:
+
+```move
+// Each hand adds to the accumulator
+fee_accumulator += pot * FEE_BASIS_POINTS;  // e.g., 72 chips × 50 = 3600
+
+// Only whole chips are collected
+fee_to_collect = fee_accumulator / 10000;   // 3600 / 10000 = 0
+fee_accumulator = fee_accumulator % 10000;  // Keep 3600 remainder
+
+// Eventually accumulator crosses threshold and fee is collected
+```
+
+**Example over 4 hands:**
+| Hand | Pot | Add to Acc | Total Acc | Fee Collected | Remainder |
+|------|-----|-----------|-----------|---------------|-----------|
+| 1 | 72 | 3600 | 3600 | 0 | 3600 |
+| 2 | 108 | 5400 | 9000 | 0 | 9000 |
+| 3 | 80 | 4000 | 13000 | **1** | 3000 |
+| 4 | 100 | 5000 | 8000 | 0 | 8000 |
+
+This ensures **exact 0.5% collection** over time regardless of individual pot sizes.
+
+### Fee Collector Setup
+
+```bash
+# Initialize fee collector (run once after deployment)
+cedra move run \
+  --function-id <CONTRACT_ADDR>::texas_holdem::init_fee_config \
+  --args address:<FEE_COLLECTOR_ADDRESS> \
+  --profile <DEPLOYER_PROFILE>
+
+# Update fee collector later (fee admin only)
+cedra move run \
+  --function-id <CONTRACT_ADDR>::texas_holdem::update_fee_collector \
+  --args address:<NEW_FEE_COLLECTOR_ADDRESS> \
+  --profile <FEE_ADMIN_PROFILE>
+```
 
 ---
 
@@ -314,12 +415,13 @@ Complete when all ACTIVE players have acted AND matched current bet.
 
 ```bash
 cedra move compile
-cedra move publish --profile <profile> --assume-yes
+cedra move publish --profile <profile> \
+  --named-addresses holdemgame=<PROFILE_ADDRESS> --assume-yes
 ```
 
-### Testnet Contract
+### Current Testnet Contract
 ```
-0xb45d818331ec975fd8257851594c43ab9e3ebac0c6934993c09f4b6cdf3a574b
+0x4d5a5fa1dae6d81ed71492a873fc358766a2d55d7020c44bd5b9e68f9ca1dbf5
 ```
 
 ---
@@ -327,11 +429,15 @@ cedra move publish --profile <profile> --assume-yes
 ## Quick Start
 
 ```bash
-ADDR=0xb45d818331ec975fd8257851594c43ab9e3ebac0c6934993c09f4b6cdf3a574b
+ADDR=0x4d5a5fa1dae6d81ed71492a873fc358766a2d55d7020c44bd5b9e68f9ca1dbf5
 
-# Create table (5/10 blinds, 100-10000 buy-in)
+# Step 1: Initialize fee collector (run once after deployment)
+cedra move run --function-id $ADDR::texas_holdem::init_fee_config \
+  --args address:$ADDR --profile <YOUR_PROFILE>
+
+# Step 2: Create table (5/10 blinds, 100-10000 buy-in)
 cedra move run --function-id $ADDR::texas_holdem::create_table \
-  --args u64:5 u64:10 u64:100 u64:10000 address:$ADDR u64:0 bool:true
+  --args u64:5 u64:10 u64:100 u64:10000 u64:0 bool:true
 
 # Buy chips
 cedra move run --function-id $ADDR::chips::buy_chips \

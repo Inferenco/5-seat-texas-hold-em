@@ -15,13 +15,16 @@ interface ActionPanelProps {
 
 export function ActionPanel({ tableAddress, gameState, seatInfo, onAction }: ActionPanelProps) {
     const { fold, check, call, raiseTo, allIn } = useContractActions();
-    const [raiseAmount, setRaiseAmount] = useState(gameState.minRaise);
+    const [raiseAmount, setRaiseAmount] = useState(0); // Will be set properly once we know minRaiseTotal
     const [loading, setLoading] = useState(false);
 
     const isMyTurn = gameState.actionOn?.playerAddress?.toLowerCase() === seatInfo.player?.toLowerCase();
     const callAmount = gameState.maxCurrentBet - seatInfo.currentBet;
     const canCheck = callAmount === 0;
     const inBettingPhase = gameState.phase >= GAME_PHASES.PREFLOP && gameState.phase <= GAME_PHASES.RIVER;
+
+    // Minimum valid total bet for a raise = current max bet + minimum raise increment
+    const minRaiseTotal = gameState.maxCurrentBet + gameState.minRaise;
 
     const handleAction = async (action: () => Promise<unknown>) => {
         try {
@@ -93,28 +96,28 @@ export function ActionPanel({ tableAddress, gameState, seatInfo, onAction }: Act
                 <div className="raise-section">
                     <input
                         type="range"
-                        min={gameState.minRaise}
+                        min={minRaiseTotal}
                         max={seatInfo.chips + seatInfo.currentBet}
-                        value={raiseAmount}
+                        value={raiseAmount < minRaiseTotal ? minRaiseTotal : raiseAmount}
                         onChange={(e) => setRaiseAmount(Number(e.target.value))}
                         className="raise-slider"
                     />
                     <div className="raise-controls">
                         <input
                             type="number"
-                            value={raiseAmount}
+                            value={raiseAmount < minRaiseTotal ? minRaiseTotal : raiseAmount}
                             onChange={(e) => setRaiseAmount(Number(e.target.value))}
                             className="raise-input"
-                            min={gameState.minRaise}
+                            min={minRaiseTotal}
                             max={seatInfo.chips + seatInfo.currentBet}
                         />
                         <button
                             className="action-btn raise"
-                            onClick={() => handleAction(() => raiseTo(tableAddress, raiseAmount))}
+                            onClick={() => handleAction(() => raiseTo(tableAddress, raiseAmount < minRaiseTotal ? minRaiseTotal : raiseAmount))}
                             disabled={loading || raiseAmount > seatInfo.chips + seatInfo.currentBet}
                         >
                             <TrendingUp size={18} />
-                            Raise to {raiseAmount}
+                            Raise to {raiseAmount < minRaiseTotal ? minRaiseTotal : raiseAmount}
                         </button>
                     </div>
                 </div>

@@ -3,13 +3,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Shield, X } from "lucide-react";
 import { useWallet } from "../components/wallet-provider";
-import { useChipsView, useContractActions, useTableView } from "../hooks/useContract";
+import { useChipsView, useContractActions, useTableView, useEventView } from "../hooks/useContract";
 import { PokerTable } from "../components/PokerTable";
 import { ActionPanel } from "../components/ActionPanel";
 import { TableInfo } from "../components/TableInfo";
 import { LifecyclePanel } from "../components/LifecyclePanel";
 import { AdminPanel } from "../components/AdminPanel";
-import { ShowdownModal } from "../components/ShowdownModal";
+import { ShowdownModal, type HandResultData } from "../components/ShowdownModal";
 import { GAME_PHASES } from "../config/contracts";
 import type { TableConfig, TableState, SeatInfo, GameState } from "../types";
 import "./Table.css";
@@ -20,6 +20,7 @@ export function Table() {
     const { getTableConfig, getTableState, getAllSeats, getFullGameState, getAdmin, isPaused, isAdminOnlyStart, getPendingLeaves, getHoleCards, getPlayersInHand } = useTableView();
     const { joinTable } = useContractActions();
     const { getBalance } = useChipsView();
+    const { getHandResultEvents } = useEventView();
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -42,17 +43,10 @@ export function Table() {
     const [holeCards, setHoleCards] = useState<number[][]>([]);
     const [playersInHand, setPlayersInHand] = useState<number[]>([]);
 
-    // Showdown snapshot - captures final state when a hand ends
-    type ShowdownSnapshot = {
-        communityCards: number[];
-        holeCards: number[][];
-        playersInHand: number[];
-        potSize: number;
-        phase: number;
-        seats: ({ player: string; chips: number } | null)[];
-    };
-    const [showdownSnapshot, setShowdownSnapshot] = useState<ShowdownSnapshot | null>(null);
+    // Hand result data - captured when a hand ends, used for showdown modal
+    const [handResult, setHandResult] = useState<HandResultData | null>(null);
     const previousPhaseRef = useRef<number | null>(null);
+    const handNumberRef = useRef<number>(0);
 
     const isAdmin = useMemo(() => {
         if (!connected || !account?.address || !adminAddress) return false;
@@ -88,24 +82,47 @@ export function Table() {
             const wasInActiveHand = prevPhase !== null && prevPhase >= GAME_PHASES.PREFLOP;
             const handJustEnded = wasInActiveHand && newPhase === GAME_PHASES.WAITING;
 
-            // Capture showdown snapshot if hand just ended and we have card data
-            if (handJustEnded && !showdownSnapshot) {
-                // Use CURRENT state (before update) which still has the cards
-                const snapshotCards = holeCards.length > 0 ? holeCards : holeCardsData;
-                const snapshotPlayers = playersInHand.length > 0 ? playersInHand : playersData;
-                const snapshotCommunity = gameState?.communityCards || [];
-                const snapshotPot = gameState?.potSize || 0;
+            // Track hand number for display
+            if (gameData.phase >= GAME_PHASES.PREFLOP && stateData.handNumber > handNumberRef.current) {
+                handNumberRef.current = stateData.handNumber;
+            }
 
-                // Only show snapshot if there were cards dealt
-                if (snapshotCommunity.length > 0 || snapshotCards.some(c => c.length > 0)) {
-                    setShowdownSnapshot({
-                        communityCards: snapshotCommunity,
-                        holeCards: snapshotCards,
-                        playersInHand: snapshotPlayers,
-                        potSize: snapshotPot,
-                        phase: prevPhase,
-                        seats: seats.map(s => s ? { player: s.player || "", chips: s.chips } : null),
-                    });
+            // Debug: Log phase transition
+            console.log("DEBUG phase:", { prevPhase, newPhase, wasInActiveHand, handJustEnded, handResult: !!handResult });
+
+            // Fetch hand result events when hand ends
+            if (handJustEnded && !handResult && address) {
+                console.log("DEBUG: Hand ended, fetching HandResult events...");
+
+                // Fetch the most recent HandResult event from the blockchain
+                const events = await getHandResultEvents(address, 1);
+
+                if (events.length > 0) {
+                    const eventData = events[0];
+                    console.log("DEBUG: HandResult event found:", eventData);
+                    setHandResult(eventData);
+                } else {
+                    console.log("DEBUG: No HandResult event found, falling back to snapshot");
+                    // Fallback: Use snapshot data if no event found (shouldn't happen normally)
+                    const snapshotPot = gameState?.potSize || 0;
+                    if (snapshotPot > 0) {
+                        setHandResult({
+                            tableAddr: address,
+                            handNumber: handNumberRef.current,
+                            timestamp: Math.floor(Date.now() / 1000),
+                            communityCards: gameState?.communityCards || [],
+                            showdownSeats: [],
+                            showdownPlayers: [],
+                            showdownHoleCards: [],
+                            showdownHandTypes: [],
+                            winnerSeats: [],
+                            winnerPlayers: [],
+                            winnerAmounts: [],
+                            totalPot: snapshotPot,
+                            totalFees: 0,
+                            resultType: 0,
+                        });
+                    }
                 }
             }
 
@@ -451,10 +468,10 @@ export function Table() {
             )}
 
             {/* Showdown Results Modal */}
-            {showdownSnapshot && (
+            {handResult && (
                 <ShowdownModal
-                    snapshot={showdownSnapshot}
-                    onDismiss={() => setShowdownSnapshot(null)}
+                    handResult={handResult}
+                    onDismiss={() => setHandResult(null)}
                 />
             )}
         </div>
