@@ -2,25 +2,25 @@
 
 ## Latest Deployment
 
-**Version:** 7.0.0 (Second Audit Remediation)  
+**Version:** 7.0.1 (close_table fix)  
 **Date:** 2025-12-27  
 **Network:** Cedra Testnet
 
 ### Contract Address
 ```
-0xda25a2e27020e30031b4ae037e6c32b22a9a2f909c4bfecc5f020f3a2028f8ea
+0xa24365cad90b74eca7f078f8c91b327c0716bcea3ed64dc9d97027b605b4fcfa
 ```
 
 ### Fee Configuration
 - **Fee Rate:** 0.5% (50 basis points)
-- **Fee Collector:** Set via `init_fee_config` after deployment
-- **Fee Admin:** `0xda25a2e27020e30031b4ae037e6c32b22a9a2f909c4bfecc5f020f3a2028f8ea`
+- **Fee Collector:** `0xb40f35d81198adc541df553d429653fdffc32163e44228433d7d2ec0fa05bf87`
+- **Fee Admin:** `0xa24365cad90b74eca7f078f8c91b327c0716bcea3ed64dc9d97027b605b4fcfa`
 
 ### Transaction
-- **Deploy Hash:** `0xb2b1955e70b21a670f4dc5cc777a442be6469f62a57be9b576f9698c6f6389fc`
-- **Explorer:** [View on Cedrascan](https://cedrascan.com/txn/0xb2b1955e70b21a670f4dc5cc777a442be6469f62a57be9b576f9698c6f6389fc?network=testnet)
+- **Deploy Hash:** `0x23071e16a26c4e45720d3ee499482ff2ef1d3637ee0459f043bf02efaf78437c`
+- **Explorer:** [View on Cedrascan](https://cedrascan.com/txn/0x23071e16a26c4e45720d3ee499482ff2ef1d3637ee0459f043bf02efaf78437c?network=testnet)
 - **Status:** ✅ Executed successfully
-- **Gas Used:** 29,152 units
+- **Gas Used:** 29,272 units
 
 ### Deployed Modules
 - `chips` - Chip token system (FA-based) with exact multiple validation
@@ -30,8 +30,13 @@
 - `texas_holdem` - Core game logic with Move Object escrow + encrypted cards
 
 ### Profile
-- **Name:** `holdem_deployer_v6`
+- **Name:** `holdem_deployer_v7`
 - **Network:** Testnet
+
+### Changes in v7.0.1
+
+- **Fixed:** `close_table` now removes `TableRef` from admin address, allowing new table creation
+- **Added:** `cleanup_table_ref` function for migration from older contract versions
 
 ### Changes in v7.0.0 (Second Audit Remediation)
 

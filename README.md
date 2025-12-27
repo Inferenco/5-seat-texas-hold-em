@@ -90,8 +90,8 @@ The Move smart contracts handle:
 ### Current Deployment
 
 - **Network:** Cedra Testnet
-- **Address:** `0xda25a2e27020e30031b4ae037e6c32b22a9a2f909c4bfecc5f020f3a2028f8ea`
-- **Version:** 7.0.0 (Second Audit Remediation)
+- **Address:** `0xa24365cad90b74eca7f078f8c91b327c0716bcea3ed64dc9d97027b605b4fcfa`
+- **Version:** 7.0.1 (close_table fix)
 - **Fee Rate:** 0.5% (with fractional accumulator for precise collection)
 
 See [`packages/contracts/docs/DOCUMENTATION.md`](packages/contracts/docs/DOCUMENTATION.md) for detailed contract documentation.

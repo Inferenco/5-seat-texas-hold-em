@@ -358,17 +358,36 @@ module holdemgame::texas_holdem {
         poker_events::emit_player_topped_up(table_addr, seat_idx, player_addr, amount, seat.chip_count);
     }
 
+    /// Cleanup orphaned TableRef when the actual Table no longer exists.
+    /// This is a migration fix for tables closed before v7.0.1 that didn't remove TableRef.
+    public entry fun cleanup_table_ref(admin: &signer) acquires TableRef {
+        let admin_addr = signer::address_of(admin);
+        assert!(exists<TableRef>(admin_addr), E_TABLE_NOT_FOUND);
+        
+        let table_ref = borrow_global<TableRef>(admin_addr);
+        let table_addr = table_ref.table_address;
+        
+        // Only allow cleanup if the actual Table no longer exists
+        assert!(!exists<Table>(table_addr), E_GAME_IN_PROGRESS);
+        
+        // Remove the orphaned TableRef
+        let TableRef { table_address: _ } = move_from<TableRef>(admin_addr);
+    }
+
     /// Close and delete a table (admin only)
     /// 
     /// Returns chips to any seated players and removes the Table resource.
     /// Cannot be called while a hand is in progress.
-    public entry fun close_table(admin: &signer, table_addr: address) acquires Table, FeeConfig {
+    public entry fun close_table(admin: &signer, table_addr: address) acquires Table, TableRef, FeeConfig {
         assert!(exists<Table>(table_addr), E_TABLE_NOT_FOUND);
         
         let admin_addr = signer::address_of(admin);
         let table = borrow_global<Table>(table_addr);
         assert!(table.admin == admin_addr, E_NOT_ADMIN);
         assert!(option::is_none(&table.game), E_GAME_IN_PROGRESS);
+        
+        // Remove the TableRef from admin's address so they can create a new table
+        let TableRef { table_address: _ } = move_from<TableRef>(admin_addr);
         
         // Move out and destroy the table
         let Table {

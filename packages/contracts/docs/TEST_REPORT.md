@@ -3,7 +3,7 @@
 **Date:** 2025-12-27  
 **Framework:** Cedra Move Test Framework  
 **Status:** ✅ All Tests Passing  
-**Version:** 7.0.0 (Second Audit Remediation)
+**Version:** 7.0.1 (close_table fix)
 
 ---
 
